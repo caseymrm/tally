@@ -5,10 +5,11 @@ your camera is in use, so the household knows you're in a meeting. Named
 for the [tally light](https://en.wikipedia.org/wiki/Tally_light) — the red
 lamp on a studio camera that tells everyone it's live.
 
-- 🟢 green dot in the menu bar when you're available, 🔴 red when you're busy
+- An **ON AIR** sign lives in your menu bar — lit red when you're live,
+  dark when you're not
 - When any app (Zoom, Google Meet, FaceTime, ...) turns on your camera, your
   light turns red; when the camera turns off, the light turns off
-- Click the dot to override the status — Force Busy or Force Available for
+- Click the sign to override the status — Force On Air or Force Off Air for
   5 minutes, 1 hour, or until you turn it off
 - Pick which light this computer controls from the same menu (scans your
   network for bulbs)

@@ -1,7 +1,7 @@
-// Tally is a macOS menu bar app that turns on a smart light outside
-// your office when your camera is in use, so the household knows you're in
-// a meeting. Green dot in the menu bar when you're available, red when
-// you're busy; click to override the status or pick which light to control.
+// Tally is a macOS menu bar app that turns on a smart light outside your
+// office when your camera is in use, so the household knows you're on the
+// air. The menu bar shows an ON AIR sign — lit red when live, dark when
+// not; click it to override the status or pick which light to control.
 package main
 
 import (
@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caseymrm/menuet"
+	"github.com/caseymrm/menuet/v2"
 	"github.com/caseymrm/tally/pkg/camera"
 	"github.com/caseymrm/tally/pkg/light"
 	_ "github.com/caseymrm/tally/pkg/light/wiz" // register the Wiz provider
@@ -19,9 +19,9 @@ import (
 
 const (
 	defaultsKeyLight = "selectedLight"
-	// reassertInterval keeps the bulb red during a meeting even if it
-	// lost power or missed a packet. We never re-assert "off" so the
-	// bulb can still be used as a normal light outside meetings.
+	// reassertInterval keeps the bulb red while on air even if it lost
+	// power or missed a packet. We never re-assert "off" so the bulb can
+	// still be used as a normal light while off air.
 	reassertInterval = time.Minute
 	scanTimeout      = 3 * time.Second
 )
@@ -30,8 +30,8 @@ type overrideMode int
 
 const (
 	overrideNone overrideMode = iota
-	overrideBusy
-	overrideAvailable
+	overrideOnAir
+	overrideOffAir
 )
 
 const statusUnknown light.Status = -1
@@ -73,27 +73,29 @@ func newStatusApp() *statusApp {
 	return s
 }
 
-// busyLocked reports the effective status; callers must hold s.mu.
-func (s *statusApp) busyLocked() bool {
+// onAirLocked reports the effective status; callers must hold s.mu.
+func (s *statusApp) onAirLocked() bool {
 	switch s.override {
-	case overrideBusy:
+	case overrideOnAir:
 		return true
-	case overrideAvailable:
+	case overrideOffAir:
 		return false
 	}
 	return s.cameraOn
 }
 
-// stateChanged refreshes the menu bar dot and pokes the light applier.
+// stateChanged refreshes the menu bar sign and pokes the light applier.
 func (s *statusApp) stateChanged() {
 	s.mu.Lock()
-	busy := s.busyLocked()
+	onAir := s.onAirLocked()
 	s.mu.Unlock()
-	title := "🟢"
-	if busy {
-		title = "🔴"
+	// The sign is always in the menu bar; it lights up red when live and
+	// goes dark (faint) when not, like a studio tally lamp.
+	sign := menuet.TextRun{Text: "ON AIR", FontWeight: menuet.WeightBold, Color: menuet.LabelTertiary}
+	if onAir {
+		sign.Color = menuet.SystemRed
 	}
-	menuet.App().SetMenuState(&menuet.MenuState{Title: title})
+	menuet.App().SetMenuState(&menuet.MenuState{Runs: []menuet.TextRun{sign}})
 	menuet.App().MenuChanged()
 	select {
 	case s.apply <- struct{}{}:
@@ -127,7 +129,7 @@ func (s *statusApp) applyLoop(ctx context.Context) {
 		s.mu.Lock()
 		l := s.light
 		desired := light.Free
-		if s.busyLocked() {
+		if s.onAirLocked() {
 			desired = light.Busy
 		}
 		lastSent := s.lastSent
@@ -261,57 +263,59 @@ func (s *statusApp) menuItems() []menuet.MenuItem {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	status := "🟢 Available"
-	if s.busyLocked() {
-		status = "🔴 In a meeting"
+	status := menuet.Regular{Text: "Off Air", FontWeight: menuet.WeightBold}
+	if s.onAirLocked() {
+		status = menuet.Regular{
+			Runs: []menuet.TextRun{{Text: "On Air", Color: menuet.SystemRed, FontWeight: menuet.WeightBold}},
+		}
 	}
 	cameraLine := "Camera is off"
 	if s.cameraOn {
 		cameraLine = "Camera is on"
 	}
 	items := []menuet.MenuItem{
-		{Text: status, FontWeight: menuet.WeightBold},
-		{Text: cameraLine, FontSize: 12},
+		status,
+		menuet.Regular{Text: cameraLine, FontSize: 12},
 	}
 
 	if s.override != overrideNone {
-		mode := "busy"
-		if s.override == overrideAvailable {
-			mode = "available"
+		mode := "on air"
+		if s.override == overrideOffAir {
+			mode = "off air"
 		}
-		text := fmt.Sprintf("Showing %s until turned off", mode)
+		text := fmt.Sprintf("Forced %s until turned off", mode)
 		if !s.overrideUntil.IsZero() {
-			text = fmt.Sprintf("Showing %s for %s more", mode, fmtDuration(time.Until(s.overrideUntil)))
+			text = fmt.Sprintf("Forced %s for %s more", mode, fmtDuration(time.Until(s.overrideUntil)))
 		}
 		items = append(items,
-			menuet.MenuItem{Text: text, FontSize: 12},
-			menuet.MenuItem{Text: "Clear Override", Clicked: func() { s.setOverride(overrideNone, 0) }},
+			menuet.Regular{Text: text, FontSize: 12},
+			menuet.Regular{Text: "Clear Override", Clicked: func() { s.setOverride(overrideNone, 0) }},
 		)
 	}
 	if s.lightErr != nil {
-		items = append(items, menuet.MenuItem{Text: "⚠️ Light is unreachable", FontSize: 12})
+		items = append(items, menuet.Regular{Text: "⚠️ Light is unreachable", FontSize: 12})
 	}
 
 	items = append(items,
-		menuet.MenuItem{Type: menuet.Separator},
-		menuet.MenuItem{
-			Text:     "Force Busy",
-			State:    s.override == overrideBusy,
-			Children: s.overrideChildren(overrideBusy),
+		menuet.Separator{},
+		menuet.Regular{
+			Text:     "Force On Air",
+			State:    s.override == overrideOnAir,
+			Children: s.overrideChildren(overrideOnAir),
 		},
-		menuet.MenuItem{
-			Text:     "Force Available",
-			State:    s.override == overrideAvailable,
-			Children: s.overrideChildren(overrideAvailable),
+		menuet.Regular{
+			Text:     "Force Off Air",
+			State:    s.override == overrideOffAir,
+			Children: s.overrideChildren(overrideOffAir),
 		},
-		menuet.MenuItem{Type: menuet.Separator},
+		menuet.Separator{},
 	)
 
 	lightText := "Choose Light"
 	if s.lightCfg != nil {
 		lightText = "Light: " + s.lightCfg.Name
 	}
-	items = append(items, menuet.MenuItem{Text: lightText, Children: s.lightChildren})
+	items = append(items, menuet.Regular{Text: lightText, Children: s.lightChildren})
 	return items
 }
 
@@ -330,7 +334,7 @@ func (s *statusApp) overrideChildren(mode overrideMode) func() []menuet.MenuItem
 		items := make([]menuet.MenuItem, 0, len(options))
 		for _, opt := range options {
 			opt := opt
-			items = append(items, menuet.MenuItem{
+			items = append(items, menuet.Regular{
 				Text:    opt.text,
 				State:   s.override == mode && s.overrideFor == opt.d,
 				Clicked: func() { s.setOverride(mode, opt.d) },
@@ -350,7 +354,7 @@ func (s *statusApp) lightChildren() []menuet.MenuItem {
 		cfg := cfg
 		selected := s.lightCfg != nil && s.lightCfg.Key() == cfg.Key()
 		selectedShown = selectedShown || selected
-		items = append(items, menuet.MenuItem{
+		items = append(items, menuet.Regular{
 			Text:    fmt.Sprintf("%s (%s)", cfg.Name, cfg.Address),
 			State:   selected,
 			Clicked: func() { s.selectLight(cfg) },
@@ -358,19 +362,19 @@ func (s *statusApp) lightChildren() []menuet.MenuItem {
 	}
 	if s.lightCfg != nil && !selectedShown {
 		cfg := *s.lightCfg
-		items = append([]menuet.MenuItem{{
+		items = append([]menuet.MenuItem{menuet.Regular{
 			Text:  fmt.Sprintf("%s (%s)", cfg.Name, cfg.Address),
 			State: true,
 		}}, items...)
 	}
 	if len(items) == 0 && !s.scanning {
-		items = append(items, menuet.MenuItem{Text: "No lights found"})
+		items = append(items, menuet.Regular{Text: "No lights found"})
 	}
-	items = append(items, menuet.MenuItem{Type: menuet.Separator})
+	items = append(items, menuet.Separator{})
 	if s.scanning {
-		items = append(items, menuet.MenuItem{Text: "Scanning…"})
+		items = append(items, menuet.Regular{Text: "Scanning…"})
 	} else {
-		items = append(items, menuet.MenuItem{Text: "Rescan Network", Clicked: s.rescan})
+		items = append(items, menuet.Regular{Text: "Rescan Network", Clicked: s.rescan})
 	}
 	return items
 }
