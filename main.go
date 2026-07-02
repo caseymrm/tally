@@ -91,7 +91,7 @@ func (s *statusApp) stateChanged() {
 	s.mu.Unlock()
 	// The sign is always in the menu bar; it lights up red when live and
 	// goes dark (faint) when not, like a studio tally lamp.
-	sign := menuet.TextRun{Text: "ON AIR", FontWeight: menuet.WeightBold, Color: menuet.LabelTertiary}
+	sign := menuet.TextRun{Text: "ON AIR", FontWeight: menuet.WeightBold, Color: menuet.LabelSecondary}
 	if onAir {
 		sign.Color = menuet.SystemRed
 	}
