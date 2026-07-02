@@ -40,7 +40,7 @@ func goCameraChanged() {
 
 // InUse reports whether any camera is currently in use by any process.
 func InUse() bool {
-	return bool(C.wizcameraAnyCameraOn())
+	return bool(C.tallyAnyCameraOn())
 }
 
 // Watch reports the camera-in-use state: the current state immediately,
@@ -51,7 +51,7 @@ func InUse() bool {
 func Watch(ctx context.Context) <-chan bool {
 	ch := make(chan bool, 1)
 	listenOnce.Do(func() {
-		C.wizcameraStartListeners()
+		C.tallyStartListeners()
 	})
 	go func() {
 		defer close(ch)

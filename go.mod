@@ -1,4 +1,4 @@
-module github.com/caseymrm/wizcamera
+module github.com/caseymrm/tally
 
 go 1.21
 

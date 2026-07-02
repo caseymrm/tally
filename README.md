@@ -1,7 +1,9 @@
-# WizCamera
+# Tally
 
 A macOS menu bar app that turns on a smart light outside your office when
-your camera is in use, so the household knows you're in a meeting.
+your camera is in use, so the household knows you're in a meeting. Named
+for the [tally light](https://en.wikipedia.org/wiki/Tally_light) — the red
+lamp on a studio camera that tells everyone it's live.
 
 - 🟢 green dot in the menu bar when you're available, 🔴 red when you're busy
 - When any app (Zoom, Google Meet, FaceTime, ...) turns on your camera, your
@@ -40,7 +42,7 @@ Requires macOS and Go.
 make run
 ```
 
-builds `WizCamera.app` and launches it. `go run .` also works for quick
+builds `Tally.app` and launches it. `go run .` also works for quick
 iteration, but Start at Login wants a real bundle path, so prefer the app
 bundle for daily use.
 

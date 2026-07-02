@@ -22,7 +22,7 @@ static dispatch_queue_t listenerQueue(void) {
 	static dispatch_queue_t queue = NULL;
 	static dispatch_once_t once;
 	dispatch_once(&once, ^{
-		queue = dispatch_queue_create("wizcamera.cmio", DISPATCH_QUEUE_SERIAL);
+		queue = dispatch_queue_create("tally.cmio", DISPATCH_QUEUE_SERIAL);
 	});
 	return queue;
 }
@@ -64,7 +64,7 @@ static bool deviceIsRunningSomewhere(CMIOObjectID device) {
 	return running != 0;
 }
 
-bool wizcameraAnyCameraOn(void) {
+bool tallyAnyCameraOn(void) {
 	CMIOObjectID *ids = NULL;
 	UInt32 count = copyDeviceIDs(&ids);
 	bool on = false;
@@ -110,7 +110,7 @@ static void registerDeviceListeners(void) {
 	free(ids);
 }
 
-void wizcameraStartListeners(void) {
+void tallyStartListeners(void) {
 	dispatch_async(listenerQueue(), ^{
 		CMIOObjectAddPropertyListenerBlock(kCMIOObjectSystemObject, &devicesAddress, listenerQueue(),
 			^(UInt32 numberAddresses, const CMIOObjectPropertyAddress addresses[]) {

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caseymrm/wizcamera/pkg/light"
+	"github.com/caseymrm/tally/pkg/light"
 )
 
 func TestPilotForBusy(t *testing.T) {

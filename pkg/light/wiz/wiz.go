@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/caseymrm/wizcamera/pkg/light"
+	"github.com/caseymrm/tally/pkg/light"
 )
 
 const (

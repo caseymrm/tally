@@ -1,4 +1,4 @@
-// WizCamera is a macOS menu bar app that turns on a smart light outside
+// Tally is a macOS menu bar app that turns on a smart light outside
 // your office when your camera is in use, so the household knows you're in
 // a meeting. Green dot in the menu bar when you're available, red when
 // you're busy; click to override the status or pick which light to control.
@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/caseymrm/menuet"
-	"github.com/caseymrm/wizcamera/pkg/camera"
-	"github.com/caseymrm/wizcamera/pkg/light"
-	_ "github.com/caseymrm/wizcamera/pkg/light/wiz" // register the Wiz provider
+	"github.com/caseymrm/tally/pkg/camera"
+	"github.com/caseymrm/tally/pkg/light"
+	_ "github.com/caseymrm/tally/pkg/light/wiz" // register the Wiz provider
 )
 
 const (
@@ -377,8 +377,8 @@ func (s *statusApp) lightChildren() []menuet.MenuItem {
 
 func main() {
 	app := menuet.App()
-	app.Name = "WizCamera"
-	app.Label = "com.github.caseymrm.wizcamera"
+	app.Name = "Tally"
+	app.Label = "com.github.caseymrm.tally"
 
 	s := newStatusApp()
 	app.Children = s.menuItems

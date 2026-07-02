@@ -1,5 +1,5 @@
 // Package light defines a provider-agnostic interface for network status
-// lights, so wizcamera can drive bulbs from different vendors (Wiz, LIFX,
+// lights, so tally can drive bulbs from different vendors (Wiz, LIFX,
 // ...) through one API. Providers register themselves at init time.
 package light
 
