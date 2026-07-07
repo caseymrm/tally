@@ -1,3 +1,7 @@
-module github.com/caseymrm/wizcamera
+module github.com/caseymrm/tally
 
-go 1.18
+go 1.21
+
+require github.com/caseymrm/menuet/v2 v2.10.3
+
+require github.com/caseymrm/askm v1.0.0 // indirect
